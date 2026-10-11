@@ -111,13 +111,14 @@ window.BUMP = window.BUMP || {};
     if (!state.profile.dueDate && state.ui.tab !== "settings") { view.innerHTML = onboardingHTML(); return; }
     var fn = { today: todayHTML, log: logHTML, learn: learnHTML, coach: coachHTML, settings: settingsHTML }[state.ui.tab] || todayHTML;
     view.innerHTML = fn();
+    view.className = ({ today: 1, log: 1, coach: 1, settings: 1 })[state.ui.tab] ? "view-grid" : "";
     window.scrollTo(0, state.ui.scrollKeep ? window.scrollY : 0);
     state.ui.scrollKeep = false;
   }
   function rerender() { state.ui.scrollKeep = true; render(); }
 
   function onboardingHTML() {
-    return '<section class="card hero"><h1>Welcome to Bump</h1><p>Your own tracker: baby facts by the day, nutrition with the why, supplements, symptoms, movement, and a coach that reads what you log.</p>' +
+    return '<section class="card hero span"><h1>Welcome to Bump</h1><p>Your own tracker: baby facts by the day, nutrition with the why, supplements, symptoms, movement, and a coach that reads what you log.</p>' +
       '<label>Due date<input type="date" id="obDue" value="' + esc(state.profile.dueDate) + '"></label>' +
       '<p class="muted">Or work it out from your last period:</p><label>First day of last period<input type="date" id="obLmp"></label>' +
       '<label>Your name (optional)<input type="text" id="obName" placeholder="Kari" value="' + esc(state.profile.name) + '"></label>' +
@@ -134,22 +135,22 @@ window.BUMP = window.BUMP || {};
     var insights = BUMP.generateInsights(c);
     var top = insights.filter(function (i) { return i.level !== "win"; })[0] || insights[0];
     var h = '';
-    h += '<section class="hero card">' +
+    h += '<section class="hero card span">' +
       '<div class="row between"><div><div class="eyebrow">' + (state.profile.name ? esc(state.profile.name) + ", you are" : "You are") + '</div><h1>Week ' + c.week + ' <span class="plus">+ ' + c.day + '</span></h1></div>' +
       '<div class="right"><div class="big">' + (c.daysToGo >= 0 ? c.daysToGo : 0) + '</div><div class="eyebrow">days to go</div></div></div>' +
       '<div class="bar"><div style="width:' + pct + '%"></div></div>' +
       '<div class="row between tiny muted"><span>Trimester ' + c.trimester + '</span><span>' + pct + '% there</span><span>Due ' + fmtDate(state.profile.dueDate) + '</span></div></section>';
-    h += '<section class="card baby" data-action="goLearn" data-learn="baby"><div class="emoji">' + w.emoji + '</div><div><div class="eyebrow">About the size of</div><h2>' + esc(cap(w.size)) + '</h2>' +
+    h += '<section class="card baby" data-action="goLearn" data-learn="baby"><div class="artwrap">' + BUMP.sizeArt(c.week) + '</div><div><div class="eyebrow">About the size of</div><h2>' + esc(cap(w.size)) + '</h2>' +
       '<div class="tiny muted">' + fmtLen(w.len) + ' · ' + fmtWt(w.wt) + '</div><p>' + esc(fact) + '</p><span class="link">This week in detail</span></div></section>';
     if (top) h += insightCard(top, true);
-    h += '<section class="card"><div class="row between"><h3>Supplements</h3><span class="tiny muted">' + suppSummary(d) + '</span></div>' + suppBoxesHTML(d, key) + '</section>';
-    h += '<section class="card"><div class="row between"><h3>Eat today</h3><button class="ghost small" data-action="goLearn" data-learn="eat">Library</button></div>' +
+    h += '<section class="card"><div class="row between"><h3>' + BUMP.icon('pill') + 'Supplements</h3><span class="tiny muted">' + suppSummary(d) + '</span></div>' + suppBoxesHTML(d, key) + '</section>';
+    h += '<section class="card"><div class="row between"><h3>' + BUMP.icon('leaf') + 'Eat today</h3><button class="ghost small" data-action="goLearn" data-learn="eat">Library</button></div>' +
       '<div class="focus"><div class="eyebrow">Nutrient focus for ' + fmtDate(key) + '</div><h4>' + esc(focus.nutrient.name) + '</h4><div class="tiny muted">' + esc(focus.nutrient.target) + '</div>' +
       '<p>' + esc(focus.nutrient.why) + '</p><details><summary>Where to get it</summary><ul>' + focus.nutrient.veg.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
       (focus.nutrient.meat.length ? '<div class="eyebrow">If you choose to eat meat or fish</div><ul>' + focus.nutrient.meat.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
       '<p class="tiny">' + esc(focus.nutrient.tips) + '</p></details></div>' + foodTargetsHTML(d, key) + '</section>';
-    h += '<section class="card"><div class="row between"><h3>Move today</h3><button class="ghost small" data-action="goLearn" data-learn="move">Library</button></div>' + movePlanHTML(d, key, c) + '</section>';
-    h += '<section class="card"><div class="row between"><h3>How are you today?</h3><button class="ghost small" data-action="goTab" data-tab="log">Full check-in</button></div>' + quickSymHTML(d, key, c) + '</section>';
+    h += '<section class="card"><div class="row between"><h3>' + BUMP.icon('move') + 'Move today</h3><button class="ghost small" data-action="goLearn" data-learn="move">Library</button></div>' + movePlanHTML(d, key, c) + '</section>';
+    h += '<section class="card"><div class="row between"><h3>' + BUMP.icon('heart') + 'How are you today?</h3><button class="ghost small" data-action="goTab" data-tab="log">Full check-in</button></div>' + quickSymHTML(d, key, c) + '</section>';
     return h;
   }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -206,7 +207,7 @@ window.BUMP = window.BUMP || {};
   /* ----- Log ----- */
   function logHTML() {
     var key = state.ui.logKey || todayKey(), c = ctxFor(key), d = day(key);
-    var h = '<section class="card"><div class="row between"><button class="ghost" data-action="logShift" data-n="-1">‹</button><div class="center"><h2>' + fmtDate(key) + '</h2><div class="tiny muted">Week ' + c.week + ' + ' + c.day + (key === todayKey() ? ' · today' : '') + '</div></div><button class="ghost" data-action="logShift" data-n="1"' + (key >= todayKey() ? ' disabled' : '') + '>›</button></div>' + (key !== todayKey() ? '<button class="ghost small" data-action="logToday">Jump to today</button>' : '') + '</section>';
+    var h = '<section class="card span"><div class="row between"><button class="ghost" data-action="logShift" data-n="-1" aria-label="previous day">' + BUMP.icon('left') + '</button><div class="center"><h2>' + fmtDate(key) + '</h2><div class="tiny muted">Week ' + c.week + ' + ' + c.day + (key === todayKey() ? ' · today' : '') + '</div></div><button class="ghost" data-action="logShift" data-n="1" aria-label="next day"' + (key >= todayKey() ? ' disabled' : '') + '>' + BUMP.icon('right') + '</button></div>' + (key !== todayKey() ? '<button class="ghost small" data-action="logToday">Jump to today</button>' : '') + '</section>';
     h += '<section class="card"><h3>Symptoms</h3>' + QUICK.map(function (q) { var v = d.sym[q[0]] || 0; return '<div class="symrow"><span>' + q[1] + '</span><div class="seg">' + ["None", "Mild", "Mod", "Severe"].map(function (l, i) { return '<button class="' + (v === i ? 'on' : '') + '" data-action="sym" data-key="' + key + '" data-id="' + q[0] + '" data-v="' + i + '">' + l + '</button>'; }).join('') + '</div></div>'; }).join('') +
       '<h4>Anything that needs a call</h4><div class="flags">' + [["bleeding", "Bleeding or spotting"], ["fluid", "Fluid leaking"], ["contractions", "Regular painful contractions"], ["visual", "Visual disturbance (flashing, blurring)"], ["ribPain", "Pain under the ribs on the right"], ["reducedMovement", "Baby moving less than usual" + (c.week < 24 ? " (from 24 weeks)" : "")]].map(function (f) { return '<label class="check"><input type="checkbox" data-action="flag" data-key="' + key + '" data-id="' + f[0] + '"' + (d.sym[f[0]] === true ? ' checked' : '') + '> ' + f[1] + '</label>'; }).join('') + '</div></section>';
     h += '<section class="card"><h3>Sleep and body</h3><div class="grid2">' +
@@ -219,7 +220,7 @@ window.BUMP = window.BUMP || {};
     h += '<section class="card"><h3>Supplements</h3>' + suppBoxesHTML(d, key) + '</section>';
     h += '<section class="card"><h3>Food targets</h3>' + foodTargetsHTML(d, key) + '</section>';
     h += '<section class="card"><h3>Movement</h3>' + movePlanHTML(d, key, c) + '</section>';
-    h += '<section class="card"><h3>Last 14 days</h3>' + historyHTML(key) + '</section>';
+    h += '<section class="card span"><h3>Last 14 days</h3>' + historyHTML(key) + '</section>';
     return h;
   }
   function historyHTML(fromKey) {
@@ -253,7 +254,7 @@ window.BUMP = window.BUMP || {};
     var c = ctxFor(), wk = state.ui.learnWeek || Math.max(4, Math.min(42, c.week)), w = BUMP.weekInfo(wk);
     var chips = ''; for (var i = 4; i <= 42; i++) chips += '<button class="chip' + (i === wk ? ' on' : '') + (i === c.week ? ' now' : '') + '" data-action="learnWeek" data-w="' + i + '">' + i + '</button>';
     return '<div class="weekchips">' + chips + '</div>' +
-      '<section class="card baby static"><div class="emoji">' + w.emoji + '</div><div><div class="eyebrow">Week ' + wk + (wk === c.week ? ' · this week' : '') + '</div><h2>' + esc(cap(w.size)) + '</h2><div class="tiny muted">' + fmtLen(w.len) + ' · ' + fmtWt(w.wt) + '</div></div></section>' +
+      '<section class="card baby static"><div class="artwrap">' + BUMP.sizeArt(wk) + '</div><div><div class="eyebrow">Week ' + wk + (wk === c.week ? ' · this week' : '') + '</div><h2>' + esc(cap(w.size)) + '</h2><div class="tiny muted">' + fmtLen(w.len) + ' · ' + fmtWt(w.wt) + '</div></div></section>' +
       '<section class="card"><h3>Baby</h3><ul>' + w.baby.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><h3>You</h3><ul>' + w.you.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></section>' +
       '<section class="card note"><div class="eyebrow">Worth knowing this week</div><p>' + esc(w.note) + '</p></section>' +
       '<section class="card"><h3>To do</h3><ul class="todo">' + w.todo.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></section>';
@@ -275,17 +276,17 @@ window.BUMP = window.BUMP || {};
 
   /* ----- Coach ----- */
   function insightCard(i, compact) {
-    return '<section class="card insight ' + i.level + '"><div class="eyebrow">' + { urgent: "Needs a call", attention: "Worth acting on", tip: "Worth knowing", win: "Going well" }[i.level] + '</div><h3>' + esc(i.title) + '</h3><p>' + esc(i.body) + '</p>' + (i.action ? '<div class="tiny act">' + esc(i.action) + '</div>' : '') + (compact ? '<button class="ghost small" data-action="goTab" data-tab="coach">All recommendations</button>' : '') + '</section>';
+    return '<section class="card insight ' + i.level + (compact ? ' span' : '') + '"><div class="eyebrow">' + BUMP.icon({ urgent: "alert", attention: "flag", tip: "bulb", win: "check" }[i.level]) + { urgent: "Needs a call", attention: "Worth acting on", tip: "Worth knowing", win: "Going well" }[i.level] + '</div><h3>' + esc(i.title) + '</h3><p>' + esc(i.body) + '</p>' + (i.action ? '<div class="tiny act">' + esc(i.action) + '</div>' : '') + (compact ? '<button class="ghost small" data-action="goTab" data-tab="coach">All recommendations</button>' : '') + '</section>';
   }
   function coachHTML() {
     var c = ctxFor(); var insights = BUMP.generateInsights(c); c.insights = insights;
     var brief = BUMP.coach.brief(c, state.ui.question || "");
     var api = state.profile.api || {};
-    var h = '<section class="card hero"><h2>Coach</h2><p class="tiny muted">Recommendations below are built from what you have logged over the last two weeks, not just from how far along you are. They are general guidance; your provider knows you.</p></section>';
+    var h = '<section class="card hero span"><h2>Coach</h2><p class="tiny muted">Recommendations below are built from what you have logged over the last two weeks, not just from how far along you are. They are general guidance; your provider knows you.</p></section>';
     h += insights.map(function (i) { return insightCard(i, false); }).join('');
     h += '<section class="card"><h3>Ask Claude</h3><p class="tiny muted">This bundles your last two weeks of logs, your context, and your question into one brief. Opening it in Claude uses your existing Claude account and costs nothing extra.</p>' +
       '<textarea id="question" rows="3" placeholder="Optional. For example: my back has been worse this week and I am not sleeping, what should I change? Or: build me a three-day vegetarian meal plan that hits iron and choline.">' + esc(state.ui.question || '') + '</textarea>' +
-      '<div class="row gap wrap"><button class="primary" data-action="askOpen">Open in Claude</button><button data-action="askCopy">Copy brief</button>' + (api.key ? '<button data-action="askApi">Ask here' + (state.ui.asking ? '…' : '') + '</button>' : '') + '</div>' +
+      '<div class="row gap wrap"><button class="primary" data-action="askOpen">' + BUMP.icon('external') + 'Open in Claude</button><button data-action="askCopy">' + BUMP.icon('copy') + 'Copy brief</button>' + (api.key ? '<button data-action="askApi">Ask here' + (state.ui.asking ? '…' : '') + '</button>' : '') + '</div>' +
       '<details><summary>See the brief Claude will get</summary><pre class="brief">' + esc(BUMP.coach.systemPrompt(c) + "\n\n---\n\n" + brief) + '</pre></details>' +
       '<details><summary>Paste an answer to keep it here</summary><textarea id="pasteAnswer" rows="4" placeholder="Paste Claude\'s reply"></textarea><button class="small" data-action="savePaste">Save answer</button></details>' +
       (api.key ? '' : '<p class="tiny muted">Want answers inside the app? Add an Anthropic API key in Settings. A question costs a few cents.</p>') + '</section>';
@@ -313,11 +314,11 @@ window.BUMP = window.BUMP || {};
       '<label>Pre-pregnancy weight (kg)<input type="number" step="0.1" data-prof="prePregWeightKg" value="' + esc(p.prePregWeightKg || '') + '"></label></div>' +
       '<label>Background for the coach<textarea data-prof="notes" rows="3" placeholder="Anything Claude should know every time: history, conditions, medications, what your provider has said, your first birth">' + esc(p.notes || '') + '</textarea></label>' +
       '<p class="tiny muted">Height and pre-pregnancy weight are optional. If you add them, the coach can gently compare weight gain to the typical range.</p></section>' +
-      '<section class="card"><h2>Supplements</h2>' + p.supplements.map(function (s, i) { return '<div class="supprow"><input type="text" data-supp="name" data-i="' + i + '" value="' + esc(s.name) + '"><input type="number" min="1" max="6" data-supp="doses" data-i="' + i + '" value="' + s.doses + '" title="doses a day"><label class="check tiny"><input type="checkbox" data-supp="optional" data-i="' + i + '"' + (s.optional ? ' checked' : '') + '> optional</label><button class="ghost small" data-action="delSupp" data-i="' + i + '">✕</button></div>'; }).join('') +
-      '<button class="small" data-action="addSupp">Add a supplement</button><p class="tiny muted">Doses a day become tick boxes. Optional ones are not counted against you.</p></section>' +
+      '<section class="card"><h2>Supplements</h2>' + p.supplements.map(function (s, i) { return '<div class="supprow"><input type="text" data-supp="name" data-i="' + i + '" value="' + esc(s.name) + '"><input type="number" min="1" max="6" data-supp="doses" data-i="' + i + '" value="' + s.doses + '" title="doses a day"><label class="check tiny"><input type="checkbox" data-supp="optional" data-i="' + i + '"' + (s.optional ? ' checked' : '') + '> optional</label><button class="ghost small" data-action="delSupp" data-i="' + i + '" aria-label="remove">' + BUMP.icon('x') + '</button></div>'; }).join('') +
+      '<button class="small" data-action="addSupp">' + BUMP.icon('plus') + 'Add a supplement</button><p class="tiny muted">Doses a day become tick boxes. Optional ones are not counted against you.</p></section>' +
       '<section class="card"><h2>Milestones</h2><p class="tiny muted">Tick these off and the coach stops reminding you.</p>' + ms.map(function (m) { return '<label class="check"><input type="checkbox" data-ms="' + m[0] + '"' + (p.milestones[m[0]] ? ' checked' : '') + '> ' + m[1] + '</label>'; }).join('') + '</section>' +
       '<section class="card"><h2>Do not lose your data</h2>' +
-      '<div class="row gap wrap"><button data-action="export">Download backup file</button><label class="btn">Restore from file<input type="file" accept="application/json" id="importFile" hidden></label></div>' +
+      '<div class="row gap wrap"><button data-action="export">' + BUMP.icon('download') + 'Download backup file</button><label class="btn">' + BUMP.icon('upload') + 'Restore from file<input type="file" accept="application/json" id="importFile" hidden></label></div>' +
       '<h3>Automatic cloud backup</h3><p class="tiny">Backs up to a private, encrypted Gist on your own GitHub account every time you log something, and pulls it back on any device you open this on. You already have a GitHub account because this app lives in it.</p>' +
       '<details' + (g.token ? '' : ' open') + '><summary>How to get a token (two minutes)</summary><ol class="tiny"><li>On GitHub, click your photo, then Settings, then Developer settings (bottom of the left menu).</li><li>Personal access tokens, then Fine-grained tokens, then Generate new token.</li><li>Name it Bump. Set expiration to the longest option or no expiration. Under Account permissions, set Gists to Read and write. Leave repository access as none.</li><li>Generate, copy the token, paste it below. It is stored only in this browser and is never uploaded.</li></ol></details>' +
       '<label>GitHub token<input type="password" data-gist="token" value="' + esc(g.token || '') + '" placeholder="github_pat_..."></label>' +
