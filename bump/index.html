@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bump</title>
+<meta name="description" content="A personal pregnancy tracker: baby by the week, nutrition with the why, supplements, movement, and a coach that reads what you log.">
+<meta name="theme-color" content="#c2577a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bump">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="app.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i></i>Bump</div>
+  <div class="tools"><span id="syncBadge" class="sync"></span><button id="gear" aria-label="Settings">⚙︎</button></div>
+</header>
+<main id="view"></main>
+<nav class="tabbar">
+  <button data-tab="today"><span>☀️</span>Today</button>
+  <button data-tab="log"><span>📝</span>Log</button>
+  <button data-tab="learn"><span>📚</span>Learn</button>
+  <button data-tab="coach"><span>💬</span>Coach</button>
+</nav>
+<div id="toast" class="toast"></div>
+<script src="data/weeks.js?v=1"></script>
+<script src="data/nutrition.js?v=1"></script>
+<script src="data/fitness.js?v=1"></script>
+<script src="data/insights.js?v=1"></script>
+<script src="sync.js?v=1"></script>
+<script src="coach.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
