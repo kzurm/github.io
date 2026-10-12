@@ -124,3 +124,6 @@ table.plan th { text-transform: none; font-size: 13px; width: 50px; } table.plan
 .sync:empty { display: none; }
 .row.between > button.small, .row.between > .link { white-space: nowrap; flex: none; }
 .row.between > h3 { flex: 1; min-width: 0; }
+
+details.restore { margin-top: 14px; } details.restore summary { font-size: 14px; }
+.hero textarea, details textarea { margin-bottom: 8px; }

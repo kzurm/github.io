@@ -123,6 +123,9 @@ window.BUMP = window.BUMP || {};
       '<p class="muted">Or work it out from your last period:</p><label>First day of last period<input type="date" id="obLmp"></label>' +
       '<label>Your name (optional)<input type="text" id="obName" placeholder="Kari" value="' + esc(state.profile.name) + '"></label>' +
       '<button class="primary" data-action="onboard">Start</button>' +
+      '<details class="restore"><summary>Already using Bump somewhere else? Bring your data here</summary>' +
+      '<p class="tiny">In the other copy, open Settings and tap Copy all data. Then paste it here.</p><textarea id="pasteData" rows="3" placeholder="Paste here"></textarea><button class="small" data-action="pasteRestore">Restore pasted data</button>' +
+      '<p class="tiny">Or restore a backup file:</p><label class="btn">' + BUMP.icon('upload') + 'Restore from file<input type="file" accept="application/json" id="importFile" hidden></label></details>' +
       '<p class="tiny">Everything stays on this device until you turn on backup in Settings. This app gives general guidance and is not a substitute for your own provider.</p></section>';
   }
 
@@ -318,7 +321,10 @@ window.BUMP = window.BUMP || {};
       '<button class="small" data-action="addSupp">' + BUMP.icon('plus') + 'Add a supplement</button><p class="tiny muted">Doses a day become tick boxes. Optional ones are not counted against you.</p></section>' +
       '<section class="card"><h2>Milestones</h2><p class="tiny muted">Tick these off and the coach stops reminding you.</p>' + ms.map(function (m) { return '<label class="check"><input type="checkbox" data-ms="' + m[0] + '"' + (p.milestones[m[0]] ? ' checked' : '') + '> ' + m[1] + '</label>'; }).join('') + '</section>' +
       '<section class="card"><h2>Do not lose your data</h2>' +
-      '<div class="row gap wrap"><button data-action="export">' + BUMP.icon('download') + 'Download backup file</button><label class="btn">' + BUMP.icon('upload') + 'Restore from file<input type="file" accept="application/json" id="importFile" hidden></label></div>' +
+      '<h3>Move to the Home Screen app or another device</h3><p class="tiny">On iPhone, the Home Screen version of Bump keeps its own separate storage, so it starts empty. Tap Copy all data here, open the other copy, and paste it in on the welcome screen or below.</p>' +
+      '<div class="row gap wrap"><button class="primary" data-action="copyData">' + BUMP.icon('copy') + 'Copy all data</button></div>' +
+      '<details><summary>Paste data from another copy</summary><textarea id="pasteData" rows="3" placeholder="Paste here"></textarea><button class="small" data-action="pasteRestore">Restore pasted data</button></details>' +
+      '<h3>Backup file</h3><div class="row gap wrap"><button data-action="export">' + BUMP.icon('download') + 'Download backup file</button><label class="btn">' + BUMP.icon('upload') + 'Restore from file<input type="file" accept="application/json" id="importFile" hidden></label></div>' +
       '<h3>Automatic cloud backup</h3><p class="tiny">Backs up to a private, encrypted Gist on your own GitHub account every time you log something, and pulls it back on any device you open this on. You already have a GitHub account because this app lives in it.</p>' +
       '<details' + (g.token ? '' : ' open') + '><summary>How to get a token (two minutes)</summary><ol class="tiny"><li>On GitHub, click your photo, then Settings, then Developer settings (bottom of the left menu).</li><li>Personal access tokens, then Fine-grained tokens, then Generate new token.</li><li>Name it Bump. Set expiration to the longest option or no expiration. Under Account permissions, set Gists to Read and write. Leave repository access as none.</li><li>Generate, copy the token, paste it below. It is stored only in this browser and is never uploaded.</li></ol></details>' +
       '<label>GitHub token<input type="password" data-gist="token" value="' + esc(g.token || '') + '" placeholder="github_pat_..."></label>' +
@@ -378,6 +384,20 @@ window.BUMP = window.BUMP || {};
     else if (a === "addSupp") { state.profile.supplements.push({ id: uid(), name: "New supplement", doses: 1, optional: true }); touchProfile(); rerender(); }
     else if (a === "delSupp") { if (!confirm("Remove this supplement from the list? Past ticks stay in your history.")) return; state.profile.supplements.splice(+el.dataset.i, 1); touchProfile(); rerender(); }
     else if (a === "export") { BUMP.store.exportJSON(state); }
+    else if (a === "copyData") { var copy = JSON.parse(JSON.stringify(state)); delete copy.ui; BUMP.coach.copy("BUMP1:" + btoa(unescape(encodeURIComponent(JSON.stringify(copy))))).then(function () { toast("Copied. Now open the other copy of Bump and paste it in."); }, function () { toast("Could not copy. Use Download backup file instead.", true); }); }
+    else if (a === "pasteRestore") {
+      var raw = (($("#pasteData") || {}).value || "").trim();
+      if (!raw) return toast("Paste the copied data first.", true);
+      try {
+        var json = raw.indexOf("BUMP1:") === 0 ? decodeURIComponent(escape(atob(raw.slice(6).replace(/\s+/g, "")))) : raw;
+        var data = JSON.parse(json);
+        if (!data || !data.days || !data.profile) throw new Error("bad");
+        var merged = BUMP.store.merge(state, data);
+        state.days = merged.days; state.profile = merged.profile; state.coach = merged.coach; state.profileUpdatedAt = merged.profileUpdatedAt;
+        if (!state.profile.dueDate && data.profile.dueDate) state.profile.dueDate = data.profile.dueDate;
+        state.ui.tab = "today"; persist(); toast("Restored. Welcome back."); render();
+      } catch (e) { toast("That does not look like Bump data. Copy it again from the other app.", true); }
+    }
     else if (a === "syncNow") { if (!state.profile.gist.token) return toast("Paste a GitHub token first.", true); var t = state.profile.gist.token; (state.profile.gist.id ? Promise.resolve(state.profile.gist.id) : BUMP.store.gistFind(t)).then(function (id) { if (id) state.profile.gist.id = id; return syncNow(true); }).catch(function (e) { toast("Could not reach GitHub: " + e.message, true); }); }
     else if (a === "disconnect") { if (!confirm("Stop backing up to GitHub? Your data stays on this device and the Gist stays on GitHub.")) return; state.profile.gist = {}; persist({ quiet: true }); render(); }
     else if (a === "reset") { if (!confirm("Erase all Bump data on this device? If you have a backup it can be restored.")) return; localStorage.removeItem("bump.v1"); location.reload(); }

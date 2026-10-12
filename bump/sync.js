@@ -46,7 +46,7 @@ window.BUMP = window.BUMP || {};
       var l = out.days[k];
       if (!l || (rd[k].updatedAt || 0) > (l.updatedAt || 0)) out.days[k] = rd[k];
     });
-    if ((remote.profileUpdatedAt || 0) > (local.profileUpdatedAt || 0)) {
+    if ((remote.profileUpdatedAt || 0) > (local.profileUpdatedAt || 0) || (!local.profile.dueDate && remote.profile && remote.profile.dueDate)) {
       var keepSync = out.profile.gist; // never let a remote copy overwrite local credentials
       var keepApi = out.profile.api;
       out.profile = remote.profile;
